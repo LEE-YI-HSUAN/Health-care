@@ -1,4 +1,4 @@
-﻿// 1072019.cpp : 此檔案包含 'main' 函式。程式會於該處開始執行及結束執行。
+// 1072019.cpp : 此檔案包含 'main' 函式。程式會於該處開始執行及結束執行。
 //
 
 #include <iostream>
@@ -24,33 +24,37 @@ public:
 
 class linkedList_icd {
 private:
-	listNode_icd* first;
+	listNode_icd* first;    //指向第一筆
 public:
 	linkedList_icd() :first(0) {};
 
 	//從後面放入
 	void Push_Back(string x, string y, string k) {
 		listNode_icd* newNode = new listNode_icd(x, y, k);
+		//是空的還沒有資料
 		if (first == 0) {
 			first = newNode;
 			return;
 		}
 
 		listNode_icd* current = first;
+		//只到最後一筆資料
 		while (current->next != 0) {
 			current = current->next;
 		}
-
+		//最後一筆指向要加入資料
 		current->next = newNode;
 	}
 	//出院空白日期
 	void blank_Date() {
 		listNode_icd* current = first;
 		string month[13] = { "0","31","28","31","30","31","30","31","31","30","31","30","31" };
-
+		//每筆icd都要處理
 		for (; current != 0; current = current->next) {
 			int sy = 0, ey = 0, sm = 0, em = 0;
+			//結束日期是空才要處理
 			if (current->dateE == "") {
+				//處理年、月
 				for (int i = 0; i < current->dateS.length(); i++) {
 					if (i == 6)
 						break;
@@ -65,22 +69,24 @@ public:
 					}
 
 				}
+				//看是否是閏年
 				if ((sy % 4 == 0) && (sy % 100 != 0) || sy % 400 == 0)
 					month[2] = "29";
 				else
 					month[2] = "28";
+				//加入結束日期
 				current->dateE += month[sm];
 			}
 
 		}
 	}
-	//合併日期
+	//相同ICD 合併日期
 	void merge() {
 		listNode_icd* current = first;
 		listNode_icd* temp = first;
 		for (; current != 0; current = current->next) {
 			for (temp = current->next; temp != 0; temp = temp->next) {
-				//相同icd下dataS較小的在最前面
+				//將相同icd下dataS較小的在放前面
 				if (temp->icd == current->icd && current->dateS > temp->dateS) {
 					string t = temp->dateS;
 					temp->dateS = current->dateS;
@@ -100,7 +106,7 @@ public:
 			}
 		}
 	}
-	//刪除重複資料
+	//刪除重複資料(ICD相同且日期都相同、ICD為空)
 	void d_icd() {
 		listNode_icd* current = first;
 		listNode_icd* temp = first;
@@ -219,7 +225,7 @@ public:
 
 class linkedList_id {
 public:
-	listNode_id* first;
+	listNode_id* first;   //指向第一筆
 	linkedList_id() :first(0) {};
 	//從後面放入
 	void Push_Back(string x, linkedList_icd y) {
@@ -396,47 +402,49 @@ public:
 	}
 };
 //--------------------------------------------------------------------------------------
-int main(int argc, char* argv[])
+int main(/*int argc, char* argv[]*/)
 {
 	ifstream fin;
-	char* filename = argv[1];
-	fin.open(filename);
+	char* filename;
+	//filename = "/test.txt";
+	//char* filename = argv[1];
+	fin.open("../test.txt");
 
 	linkedList_id all_ID;
 	string str;
-	//讀資料
+	//讀資料(一行一行讀)
 	while (getline(fin, str)) {
 		one_infor now;
 		linkedList_icd icd;
 
 		string s = "";
 		int index = 0;
-		str += ",";
+		//處理單筆資料
 		for (int i = 0; i < str.length(); i++) {
 			if (str[i] != ',')
 				s += str[i];
 			else {
 				index++;
 				now.judgment_data(index, s);
-				s = "";
+				s = "";       //s清空
 			}
 		}
 		//將每個病例、病人對應分別放好
 		for (int i = 0; i < now.get_icd().size(); i++)
 			icd.Push_Back(now.get_icd()[i], now.get_dateS(), now.get_dateE());
 
-		//判斷id是否已經有過病例，有就跳過，沒有就創造
+		//判斷id是否已經有過病例，沒有就創造，有加入icd
 		if (!all_ID.find_id(now.get_id()))
 			all_ID.Push_Back(now.get_id(), icd);
 		else
 			all_ID.add_icd(now.get_id(), icd);
 	}
-	//資料排序+		dateE	""	std::string
 
+	//資料排序，先按id在按icd
 	all_ID.sort_id();
 	all_ID.sort_icd();
 
-	listNode_id* temp = all_ID.first;
+	listNode_id* temp = all_ID.first;    //指標
 	//空白日期
 	for (; temp != 0; temp = temp->next)
 		temp->icd.blank_Date();
@@ -452,7 +460,6 @@ int main(int argc, char* argv[])
 	temp = all_ID.first;
 	for (; temp != 0; temp = temp->next)
 		temp->icd.cal_date(temp->id);
-	//system("pause");
 	return 0;
 }
 
